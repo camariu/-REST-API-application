@@ -203,6 +203,7 @@ const loginUserController = async (req, res, next) => {
 };
 
 const logoutUserController = async (req, res, next) => {
+
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader) {
@@ -227,6 +228,7 @@ const logoutUserController = async (req, res, next) => {
 };
 
 const getUsersController = async (req, res, next) => {
+   
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader) {
@@ -258,6 +260,7 @@ const getUsersController = async (req, res, next) => {
 
 
 const uploadAvatarController = async (req, res, next) => {
+  console.log("test")
   try {
     if (!req.file) {
       return res.status(404).json({ error: "You must upload an avatar!" });

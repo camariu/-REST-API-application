@@ -48,6 +48,6 @@ router.get("/users/logout", auth, controller.logoutUserController);
 
 router.get("/users/current", auth, controller.getUsersController);
 
-router.post("/users/avatars", auth, upload.single("avatar"), controller.uploadAvatarController);
+router.patch("/users/avatars", auth, upload.single("avatar"), controller.uploadAvatarController);
 
 module.exports = router;
