@@ -1,110 +1,53 @@
 const express = require("express");
-
+const { auth } = require("../../middewares/auth");
 const router = express.Router();
+const controller = require("../../controllers/contacts.js");
 
-const { listContacts, getContactById, removeContact, addContact, updateContact } = require("../../models/contacts");
+const path = require("path")
+const multer = require("multer")
 
-router.get("/", async (req, res, next) => {
-  try {
-    const contacts = await listContacts();
-    res.status(200).json({
-      status: "success",
-      code: 200,
-      data: { ...contacts },
-    });
-  } catch (error) {
-    res.status(500).json({
-      status: "error",
-      code: 500,
-      message: "Contacts are not found",
-    });
-  }
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "./public/avatars");
+  },
+  filename: function (req, file, cb) {
+    cb(
+      null,
+      file.fieldname + "-" + Date.now() + path.extname(file.originalname)
+    );
+  },
 });
 
-router.get("/:contactId", async (req, res, next) => {
-  const id = req.params.contactId;
-  try {
-    const contacts = await getContactById(id);
-    res.status(200).json({
-      status: "succes",
-      code: 200,
-      data: {...contacts},
-    });
-  } catch (error) {
-    res.status(500).json({
-      status: "error",
-      code: "500",
-      message: "Contact don't exist",
-    });
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith("image/")) {
+    cb(null, true);
+  } else {
+    cb(null, false);
   }
-});
+};
 
-router.post("/", async (req, res, next) => {
-  const {name, email, phone} = req.body
-  try {
-    const contacts = await addContact(name, email, phone)
-    res.status(200).json({
-      status: "succes",
-      code: 200,
-      data:  contacts
-    })
-  } catch (error) {
-    res.status(500).json({
-      status: "error",
-      code: "500",
-      message: "The contact don't be add",
-    });
-  }
-  
-});
+const upload = multer({ storage: storage, fileFilter: fileFilter });
 
-router.delete("/:contactId", async (req, res, next) => {
-  const id = req.params.contactId;
-  try {
-    const contacts = await removeContact(id)
-    res.status(200).json({
-      status: "succes",
-      code: 200,
-      data: {...contacts},
-    });
-    
-  } catch (error) {
-    res.status(500).json({
-      status: "error",
-      code: "500",
-      message: "Contact don't exist",
-    });
-  }
-});
+router.get("/", auth, controller.get);
 
-router.put("/:contactId", async (req, res, next) => {
-  const id = req.params.contactId;
-  const {name, email, phone} = req.body
-  try {
-    const contactUpdate = await updateContact(id, name, email, phone)
-    if(!contactUpdate){
-      res.status(404).json({
-        status: "error",
-        code:404,
-        message: "Contact not found"
-      })
-      return
-    }
-    res.status(200).json({
-      status: "succes",
-      code: 200,
-      data: contactUpdate
+router.get("/contacts/:contactId", auth, controller.getById);
 
-    })
-  } catch (error) {
-    
-    res.status(500).json({
-      status: "error",
-      code: "500",
-      message: "Failed to update contact",
-    });
-  }
+router.post("/contacts", auth, controller.add);
 
-});
+router.delete("/contacts/:contactId", auth, controller.remove);
+
+router.put("/contacts/:contactId", auth, controller.update);
+
+router.patch("/contacts/:contactId/favorite", auth, controller.updateStatus);
+
+router.post("/users/register", controller.createUserController);
+
+router.post("/users/login", controller.loginUserController);
+
+router.get("/users/logout", auth, controller.logoutUserController);
+
+router.get("/users/current", auth, controller.getUsersController);
+
+router.patch("/users/avatars", auth, upload.single("avatar"), controller.uploadAvatarController);
 
 module.exports = router;
