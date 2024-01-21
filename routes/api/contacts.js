@@ -49,5 +49,7 @@ router.get("/users/logout", auth, controller.logoutUserController);
 router.get("/users/current", auth, controller.getUsersController);
 
 router.patch("/users/avatars", auth, upload.single("avatar"), controller.uploadAvatarController);
+ 
+router.get("/users/verify/:verificationToken", controller.verifyEmailController);
 
 module.exports = router;

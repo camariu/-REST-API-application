@@ -1,5 +1,6 @@
 const Contact = require("./schemas/schemaContacts.js");
-const User = require("./schemas/schemaUsers.js")
+const User = require("./schemas/schemaUsers.js");
+const sgMail = require("@sendgrid/mail");
 
 const getAllContacts = async () => {
   return Contact.find();
@@ -20,14 +21,35 @@ const updateContactStatus = async (id, data) => {
   return Contact.findByIdAndUpdate(id, data, { new: true });
 };
 
-const createUser = async ({ email, password }) => {
+const createUser = async ({ email, password, name }) => {
   const userExistent = await User.findOne({ email });
 
   if (userExistent) {
     throw new Error("Email already in use!");
   }
 
-  const newUser = new User({ email, password });
+  const codUnicDeVerificare = String(Date.now());
+
+  const msg = {
+    to: email,
+    from: "amariutei1998@gmail.com",
+    subject: "Email de verificare",
+    text: `Codul de verificare este ${codUnicDeVerificare} / http://localhost:5000/api/users/verify/${codUnicDeVerificare} `,
+  };
+
+  sgMail
+    .send(msg)
+    .then(() => console.log("Email trimis"))
+    .catch(() => {
+      throw new Error("Eroare la trimitere");
+    });
+
+  const newUser = new User({
+    email,
+    password,
+    name,
+    verificationToken: codUnicDeVerificare,
+  });
   newUser.setPassword(password);
   return await newUser.save();
 };
@@ -49,6 +71,22 @@ const findUser = async (user) => {
   return result;
 };
 
+const verifyEmail = async (verificationToken) => {
+  try {
+    const update = { verify: true, verificationToken: null };
+
+    const result = await User.findOneAndUpdate(
+      {verificationToken: verificationToken},
+      {$set: update},
+      { new: true },
+    );
+
+    if (!result) throw new Eroor("Userul nu exista");
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 module.exports = {
   getAllContacts,
   getContactById,
@@ -59,4 +97,5 @@ module.exports = {
   createUser,
   loginUser,
   findUser,
+  verifyEmail,
 };
