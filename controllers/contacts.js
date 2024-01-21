@@ -8,6 +8,8 @@ const {
   createUser,
   loginUser,
   findUser,
+  verifyEmail,
+  
 } = require("../services/index.js");
 
 const jwt = require("jsonwebtoken");
@@ -17,6 +19,7 @@ const secret = process.env.SECRET;
 const Jimp = require("jimp");
 const fs = require("fs");
 const path = require("path");
+
 
 const get = async (req, res, next) => {
   try {
@@ -141,10 +144,11 @@ const updateStatus = async (req, res, next) => {
 
 const createUserController = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, name } = req.body;
     const result = await createUser({
       email,
       password,
+      name,
     });
     const payload = { email: result.email };
     const token = jwt.sign(payload, secret, { expiresIn: "1h" });
@@ -161,7 +165,7 @@ const createUserController = async (req, res, next) => {
   } catch (error) {
     res.status(409).json({
       status: 409,
-      error: "Email in use!",
+      error: "Email in use!!",
     });
   }
 };
@@ -303,6 +307,21 @@ const uploadAvatarController = async (req, res, next) => {
   }
 };
 
+const verifyEmailController = async (req, res, next) => {
+  try {
+    const { verificationToken } = req.params;
+    console.log(verificationToken);
+    await verifyEmail(verificationToken);
+
+    res.status(200).json({ mesaj: "Email verified with succes", code: 200 });
+  } catch (error) {
+    res.status(404).json({
+      status: "error",
+      message: error.message,
+    });
+  }
+};
+
 module.exports = {
   get,
   getById,
@@ -314,5 +333,6 @@ module.exports = {
   loginUserController,
   logoutUserController,
   getUsersController,
-  uploadAvatarController
+  uploadAvatarController,
+  verifyEmailController,
 };
